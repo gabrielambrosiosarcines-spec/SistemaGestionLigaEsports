@@ -34,19 +34,8 @@ public sealed class JugadoresController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<JugadorRespuestaDto>> Crear(CrearJugadorDto solicitud)
     {
-        try
-        {
-            var jugador = await _servicio.CrearAsync(solicitud);
-            return CreatedAtAction(nameof(ObtenerPorId), new { id = jugador.Id }, jugador);
-        }
-        catch (NicknameDuplicadoException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
-        catch (DatosJugadorInvalidosException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var jugador = await _servicio.CrearAsync(solicitud);
+        return CreatedAtAction(nameof(ObtenerPorId), new { id = jugador.Id }, jugador);
     }
 
     [HttpPut("{id:guid}")]
@@ -54,38 +43,20 @@ public sealed class JugadoresController : ControllerBase
         Guid id,
         ActualizarJugadorDto solicitud)
     {
-        try
+        var jugador = await _servicio.ActualizarAsync(id, solicitud);
+        if (jugador is null)
         {
-            var jugador = await _servicio.ActualizarAsync(id, solicitud);
-            if (jugador is null)
-            {
-                return NotFound(new { mensaje = "El jugador no existe." });
-            }
+            return NotFound(new { mensaje = "El jugador no existe." });
+        }
 
-            return Ok(jugador);
-        }
-        catch (NicknameDuplicadoException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
-        catch (DatosJugadorInvalidosException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return Ok(jugador);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Eliminar(Guid id)
     {
-        try
-        {
-            return await _servicio.EliminarAsync(id)
-                ? NoContent()
-                : NotFound(new { mensaje = "El jugador no existe." });
-        }
-        catch (DatosJugadorInvalidosException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return await _servicio.EliminarAsync(id)
+            ? NoContent()
+            : NotFound(new { mensaje = "El jugador no existe." });
     }
 }

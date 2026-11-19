@@ -16,7 +16,7 @@ public sealed class TorneoNoEncontradoParaPartidaException : PartidaReglaExcepti
     }
 }
 
-public sealed class TorneoNoEnCursoException : PartidaReglaException
+public sealed class TorneoNoEnCursoException : PartidaReglaException, IConflictoNegocioException
 {
     public TorneoNoEnCursoException(string estado)
         : base($"La operación de partidas requiere un torneo en estado 'EnCurso', pero está en '{estado}'.")
@@ -24,7 +24,7 @@ public sealed class TorneoNoEnCursoException : PartidaReglaException
     }
 }
 
-public sealed class GruposNoGeneradosParaPartidasException : PartidaReglaException
+public sealed class GruposNoGeneradosParaPartidasException : PartidaReglaException, IConflictoNegocioException
 {
     public GruposNoGeneradosParaPartidasException(Guid torneoId)
         : base($"El torneo '{torneoId}' todavía no tiene grupos generados.")
@@ -40,7 +40,7 @@ public sealed class ConfiguracionGruposInvalidaException : PartidaReglaException
     }
 }
 
-public sealed class FasePartidasYaGeneradaException : PartidaReglaException
+public sealed class FasePartidasYaGeneradaException : PartidaReglaException, IConflictoNegocioException
 {
     public FasePartidasYaGeneradaException(string fase, Guid torneoId)
         : base($"La fase '{fase}' del torneo '{torneoId}' ya fue generada.")
@@ -48,7 +48,7 @@ public sealed class FasePartidasYaGeneradaException : PartidaReglaException
     }
 }
 
-public sealed class FasePartidasIncompletaException : PartidaReglaException
+public sealed class FasePartidasIncompletaException : PartidaReglaException, IConflictoNegocioException
 {
     public FasePartidasIncompletaException(string fase)
         : base($"La fase '{fase}' todavía no está completa.")
@@ -72,7 +72,7 @@ public sealed class ResultadoPartidaInvalidoException : PartidaReglaException
     }
 }
 
-public sealed class PartidaYaFinalizadaException : PartidaReglaException
+public sealed class PartidaYaFinalizadaException : PartidaReglaException, IConflictoNegocioException
 {
     public PartidaYaFinalizadaException(Guid id)
         : base($"La partida '{id}' ya está finalizada y no puede modificarse.")

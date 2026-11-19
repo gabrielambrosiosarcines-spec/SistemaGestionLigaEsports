@@ -1,0 +1,664 @@
+{
+  "info": {
+    "_postman_id": "3d4e5f60-7182-493a-b4c5-d6e7f8091a20",
+    "name": "SistemaGestionLigaEsports - Compacta",
+    "description": "Colección compacta de 15 solicitudes. Ejecutar en orden sobre una API recién iniciada; la primera solicitud prepara automáticamente los jugadores y equipos necesarios.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5167"
+    },
+    {
+      "key": "runId",
+      "value": ""
+    }
+  ],
+  "item": [
+    {
+      "name": "01 - Preparación y validaciones",
+      "item": [
+        {
+          "name": "Preparar escenario: 8 equipos completos",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/equipos",
+            "description": "Crea automáticamente 40 jugadores, 8 equipos y asigna 5 jugadores activos a cada equipo."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.collectionVariables.set('runId', String(Date.now()));",
+                  "pm.collectionVariables.unset('setupError');",
+                  "const base = pm.variables.replaceIn('{{baseUrl}}');",
+                  "const headers = { 'Content-Type': 'application/json' };",
+                  "const players = {};",
+                  "const teams = {};",
+                  "",
+                  "function send(method, path, body, done) {",
+                  "    pm.sendRequest({",
+                  "        url: base + path,",
+                  "        method: method,",
+                  "        header: headers,",
+                  "        body: body === null ? undefined : {",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify(body)",
+                  "        }",
+                  "    }, function (error, response) {",
+                  "        if (error) {",
+                  "            done(error);",
+                  "            return;",
+                  "        }",
+                  "        if (response.code < 200 || response.code >= 300) {",
+                  "            done(new Error(method + ' ' + path + ' devolvió ' + response.code));",
+                  "            return;",
+                  "        }",
+                  "        let data = {};",
+                  "        try {",
+                  "            data = response.json();",
+                  "        } catch (_) {",
+                  "        }",
+                  "        done(null, data);",
+                  "    });",
+                  "}",
+                  "",
+                  "function series(values, action, done) {",
+                  "    let position = 0;",
+                  "    function next(error) {",
+                  "        if (error || position === values.length) {",
+                  "            done(error);",
+                  "            return;",
+                  "        }",
+                  "        const value = values[position++];",
+                  "        action(value, next);",
+                  "    }",
+                  "    next();",
+                  "}",
+                  "",
+                  "function fail(error) {",
+                  "    pm.collectionVariables.set('setupError', error.message);",
+                  "    console.error(error);",
+                  "}",
+                  "",
+                  "const playerIndexes = Array.from({ length: 40 }, (_, index) => index + 1);",
+                  "series(playerIndexes, function (index, next) {",
+                  "    const nickname = 'compacto-jugador-' + String(index).padStart(2, '0') + '-' + pm.collectionVariables.get('runId');",
+                  "    send('POST', '/api/jugadores', {",
+                  "        Nickname: nickname,",
+                  "        Nombre: 'Jugador compacto ' + index,",
+                  "        Activo: true",
+                  "    }, function (error, data) {",
+                  "        if (!error) {",
+                  "            players[index] = data.id;",
+                  "            if (index === 1) {",
+                  "                pm.collectionVariables.set('jugador01Nickname', nickname);",
+                  "                pm.collectionVariables.set('jugador01Id', data.id);",
+                  "            }",
+                  "        }",
+                  "        next(error);",
+                  "    });",
+                  "}, function (error) {",
+                  "    if (error) {",
+                  "        fail(error);",
+                  "        return;",
+                  "    }",
+                  "",
+                  "    const teamIndexes = Array.from({ length: 8 }, (_, index) => index + 1);",
+                  "    series(teamIndexes, function (index, next) {",
+                  "        send('POST', '/api/equipos', {",
+                  "            Nombre: 'Equipo compacto ' + String(index).padStart(2, '0') + '-' + pm.collectionVariables.get('runId'),",
+                  "            Activo: true",
+                  "        }, function (error, data) {",
+                  "            if (!error) {",
+                  "                teams[index] = data.id;",
+                  "                pm.collectionVariables.set('equipo' + String(index).padStart(2, '0') + 'Id', data.id);",
+                  "            }",
+                  "            next(error);",
+                  "        });",
+                  "    }, function (error) {",
+                  "        if (error) {",
+                  "            fail(error);",
+                  "            return;",
+                  "        }",
+                  "",
+                  "        series(teamIndexes, function (teamIndex, nextTeam) {",
+                  "            const firstPlayer = (teamIndex - 1) * 5 + 1;",
+                  "            const teamPlayers = Array.from({ length: 5 }, (_, index) => firstPlayer + index);",
+                  "            series(teamPlayers, function (playerIndex, nextPlayer) {",
+                  "                send('POST', '/api/equipos/' + teams[teamIndex] + '/jugadores/' + players[playerIndex], null, nextPlayer);",
+                  "            }, nextTeam);",
+                  "        }, function (error) {",
+                  "            if (error) {",
+                  "                fail(error);",
+                  "                return;",
+                  "            }",
+                  "            pm.collectionVariables.set('setupReady', 'true');",
+                  "        });",
+                  "    });",
+                  "});"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Hay ocho equipos preparados', function () {",
+                  "    pm.expect(pm.collectionVariables.get('setupError')).to.be.empty;",
+                  "    pm.expect(body).to.be.an('array').with.length(8);",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400: validación de jugador",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/jugadores",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"Nickname\": \"\", \"Nombre\": \"Inválido\", \"Activo\": true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('ProblemDetails contiene errors', function () { pm.expect(body).to.have.property('errors'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409: nickname duplicado",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/jugadores",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"Nickname\": \"{{jugador01Nickname}}\", \"Nombre\": \"Duplicado\", \"Activo\": true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 409', function () { pm.response.to.have.status(409); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La respuesta contiene mensaje', function () {",
+                  "    pm.expect(body).to.have.property('mensaje').that.is.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404: jugador inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/jugadores/00000000-0000-0000-0000-000000000001"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La respuesta contiene mensaje', function () {",
+                  "    pm.expect(body).to.have.property('mensaje').that.is.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 - Torneo e inscripciones",
+      "item": [
+        {
+          "name": "Crear torneo de 8 equipos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/torneos",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"Nombre\": \"Torneo compacto-{{runId}}\", \"FechaInicio\": \"2030-01-01T10:00:00Z\", \"FechaFin\": null, \"Capacidad\": 8}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.id).to.be.a('string').and.not.empty;",
+                  "pm.collectionVariables.set('torneoId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Abrir inscripciones",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/torneos/{{torneoId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"Nombre\": \"Torneo compacto-{{runId}}\", \"FechaInicio\": \"2030-01-01T10:00:00Z\", \"FechaFin\": null, \"Capacidad\": 8, \"Estado\": \"InscripcionesAbiertas\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.estado).to.eql('InscripcionesAbiertas');"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Inscribir los ocho equipos",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/inscripciones",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"EquipoId\": \"{{equipo01Id}}\", \"TorneoId\": \"{{torneoId}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "description": "El pre-request registra los equipos 02 a 08; esta solicitud registra el equipo 01."
+          },
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "const base = pm.variables.replaceIn('{{baseUrl}}');",
+                  "const tournamentId = pm.collectionVariables.get('torneoId');",
+                  "const headers = { 'Content-Type': 'application/json' };",
+                  "const teamIds = [2, 3, 4, 5, 6, 7, 8].map(function (index) {",
+                  "    return pm.collectionVariables.get('equipo' + String(index).padStart(2, '0') + 'Id');",
+                  "});",
+                  "",
+                  "function next(index) {",
+                  "    if (index === teamIds.length) {",
+                  "        return;",
+                  "    }",
+                  "    pm.sendRequest({",
+                  "        url: base + '/api/inscripciones',",
+                  "        method: 'POST',",
+                  "        header: headers,",
+                  "        body: {",
+                  "            mode: 'raw',",
+                  "            raw: JSON.stringify({",
+                  "                EquipoId: teamIds[index],",
+                  "                TorneoId: tournamentId",
+                  "            })",
+                  "        }",
+                  "    }, function (error, response) {",
+                  "        if (error || response.code < 200 || response.code >= 300) {",
+                  "            pm.collectionVariables.set('enrollmentError', error ? error.message : String(response.code));",
+                  "            return;",
+                  "        }",
+                  "        next(index + 1);",
+                  "    });",
+                  "}",
+                  "",
+                  "pm.collectionVariables.unset('enrollmentError');",
+                  "next(0);"
+                ]
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La inscripción principal tiene id', function () { pm.expect(body.id).to.be.a('string').and.not.empty; });",
+                  "pm.expect(pm.collectionVariables.get('enrollmentError')).to.be.empty;",
+                  "pm.collectionVariables.set('inscripcionId', body.id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Iniciar torneo",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/torneos/{{torneoId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"Nombre\": \"Torneo compacto-{{runId}}\", \"FechaInicio\": \"2030-01-01T10:00:00Z\", \"FechaFin\": null, \"Capacidad\": 8, \"Estado\": \"EnCurso\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.estado).to.eql('EnCurso');"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "03 - Grupos y partidas",
+      "item": [
+        {
+          "name": "Generar grupos",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/torneos/{{torneoId}}/grupos/generar"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Se generan dos grupos', function () { pm.expect(body).to.be.an('array').with.length(2); });",
+                  "pm.collectionVariables.set('grupoAId', body[0].id);",
+                  "pm.collectionVariables.set('grupoBId', body[1].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Generar partidas de grupos",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/torneos/{{torneoId}}/partidas/generar-grupos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 201', function () { pm.response.to.have.status(201); });",
+                  "const body = pm.response.json();",
+                  "pm.test('Se generan doce partidas', function () {",
+                  "    pm.expect(body).to.be.an('array').with.length(12);",
+                  "    pm.expect(body[0].fase).to.eql('Grupos');",
+                  "});",
+                  "pm.collectionVariables.set('partidaGrupo01Id', body[0].id);",
+                  "pm.collectionVariables.set('partidaGrupo02Id', body[1].id);",
+                  "pm.collectionVariables.set('partidaGrupo03Id', body[2].id);",
+                  "pm.collectionVariables.set('partidaGrupo04Id', body[3].id);",
+                  "pm.collectionVariables.set('partidaGrupo05Id', body[4].id);",
+                  "pm.collectionVariables.set('partidaGrupo06Id', body[5].id);",
+                  "pm.collectionVariables.set('partidaGrupo07Id', body[6].id);",
+                  "pm.collectionVariables.set('partidaGrupo08Id', body[7].id);",
+                  "pm.collectionVariables.set('partidaGrupo09Id', body[8].id);",
+                  "pm.collectionVariables.set('partidaGrupo10Id', body[9].id);",
+                  "pm.collectionVariables.set('partidaGrupo11Id', body[10].id);",
+                  "pm.collectionVariables.set('partidaGrupo12Id', body[11].id);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "400: resultado empatado",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/partidas/{{partidaGrupo01Id}}/resultado",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"RondasEquipoA\": 10, \"RondasEquipoB\": 10}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 400', function () { pm.response.to.have.status(400); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La respuesta contiene mensaje', function () {",
+                  "    pm.expect(body).to.have.property('mensaje').that.is.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409: partidas de grupos ya generadas",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": "{{baseUrl}}/api/torneos/{{torneoId}}/partidas/generar-grupos"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 409', function () { pm.response.to.have.status(409); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La respuesta contiene mensaje', function () {",
+                  "    pm.expect(body).to.have.property('mensaje').that.is.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Consultar clasificación de grupo",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/grupos/{{grupoAId}}/clasificacion"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 200', function () { pm.response.to.have.status(200); });",
+                  "const body = pm.response.json();",
+                  "pm.expect(body.equipos).to.be.an('array').with.length(4);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "404: partida inexistente",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{baseUrl}}/api/partidas/00000000-0000-0000-0000-000000000002"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 404', function () { pm.response.to.have.status(404); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La respuesta contiene mensaje', function () {",
+                  "    pm.expect(body).to.have.property('mensaje').that.is.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "409: finalizar sin completar la final",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              }
+            ],
+            "url": "{{baseUrl}}/api/torneos/{{torneoId}}",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"Nombre\": \"Torneo compacto-{{runId}}\", \"FechaInicio\": \"2030-01-01T10:00:00Z\", \"FechaFin\": \"2030-02-01T10:00:00Z\", \"Capacidad\": 8, \"Estado\": \"Finalizado\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text",
+                "exec": [
+                  "pm.test('HTTP 409', function () { pm.response.to.have.status(409); });",
+                  "const body = pm.response.json();",
+                  "pm.test('La respuesta contiene mensaje', function () {",
+                  "    pm.expect(body).to.have.property('mensaje').that.is.a('string').and.not.empty;",
+                  "});"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -34,15 +34,8 @@ public sealed class TorneosController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<TorneoRespuestaDto>> Crear(CrearTorneoDto solicitud)
     {
-        try
-        {
-            var torneo = await _servicio.CrearAsync(solicitud);
-            return CreatedAtAction(nameof(ObtenerPorId), new { id = torneo.Id }, torneo);
-        }
-        catch (TorneoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var torneo = await _servicio.CrearAsync(solicitud);
+        return CreatedAtAction(nameof(ObtenerPorId), new { id = torneo.Id }, torneo);
     }
 
     [HttpPut("{id:guid}")]
@@ -50,31 +43,17 @@ public sealed class TorneosController : ControllerBase
         Guid id,
         ActualizarTorneoDto solicitud)
     {
-        try
-        {
-            var torneo = await _servicio.ActualizarAsync(id, solicitud);
-            return torneo is null
-                ? NotFound(new { mensaje = "El torneo no existe." })
-                : Ok(torneo);
-        }
-        catch (TorneoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var torneo = await _servicio.ActualizarAsync(id, solicitud);
+        return torneo is null
+            ? NotFound(new { mensaje = "El torneo no existe." })
+            : Ok(torneo);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Eliminar(Guid id)
     {
-        try
-        {
-            return await _servicio.EliminarAsync(id)
-                ? NoContent()
-                : NotFound(new { mensaje = "El torneo no existe." });
-        }
-        catch (TorneoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return await _servicio.EliminarAsync(id)
+            ? NoContent()
+            : NotFound(new { mensaje = "El torneo no existe." });
     }
 }

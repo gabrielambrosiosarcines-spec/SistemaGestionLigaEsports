@@ -16,7 +16,7 @@ public sealed class TorneoNoEncontradoParaGruposException : GrupoReglaException
     }
 }
 
-public sealed class TorneoNoDisponibleParaGruposException : GrupoReglaException
+public sealed class TorneoNoDisponibleParaGruposException : GrupoReglaException, IConflictoNegocioException
 {
     public TorneoNoDisponibleParaGruposException(string estado)
         : base($"No se pueden generar grupos para un torneo en estado '{estado}'.")
@@ -24,7 +24,7 @@ public sealed class TorneoNoDisponibleParaGruposException : GrupoReglaException
     }
 }
 
-public sealed class InscripcionesIncompletasParaGruposException : GrupoReglaException
+public sealed class InscripcionesIncompletasParaGruposException : GrupoReglaException, IConflictoNegocioException
 {
     public InscripcionesIncompletasParaGruposException(int actual, int capacidad)
         : base($"El torneo tiene {actual} inscripciones, pero necesita exactamente {capacidad}.")
@@ -32,7 +32,7 @@ public sealed class InscripcionesIncompletasParaGruposException : GrupoReglaExce
     }
 }
 
-public sealed class GruposYaGeneradosException : GrupoReglaException
+public sealed class GruposYaGeneradosException : GrupoReglaException, IConflictoNegocioException
 {
     public GruposYaGeneradosException(Guid torneoId)
         : base($"Los grupos del torneo '{torneoId}' ya fueron generados.")

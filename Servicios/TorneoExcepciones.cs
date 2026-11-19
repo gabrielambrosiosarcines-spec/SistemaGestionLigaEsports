@@ -8,7 +8,7 @@ public abstract class TorneoReglaException : Exception
     }
 }
 
-public sealed class NombreTorneoDuplicadoException : TorneoReglaException
+public sealed class NombreTorneoDuplicadoException : TorneoReglaException, IConflictoNegocioException
 {
     public NombreTorneoDuplicadoException(string nombre)
         : base($"El nombre de torneo '{nombre}' ya está registrado.")
@@ -24,7 +24,7 @@ public sealed class DatosTorneoInvalidosException : TorneoReglaException
     }
 }
 
-public sealed class TransicionTorneoInvalidaException : TorneoReglaException
+public sealed class TransicionTorneoInvalidaException : TorneoReglaException, IConflictoNegocioException
 {
     public TransicionTorneoInvalidaException(string estadoActual, string estadoSolicitado)
         : base($"No se permite pasar de '{estadoActual}' a '{estadoSolicitado}'.")
@@ -32,7 +32,7 @@ public sealed class TransicionTorneoInvalidaException : TorneoReglaException
     }
 }
 
-public sealed class TorneoNoEliminableException : TorneoReglaException
+public sealed class TorneoNoEliminableException : TorneoReglaException, IConflictoNegocioException
 {
     public TorneoNoEliminableException(string estado)
         : base($"No se puede eliminar un torneo en estado '{estado}'.")
@@ -40,7 +40,7 @@ public sealed class TorneoNoEliminableException : TorneoReglaException
     }
 }
 
-public sealed class TorneoInscripcionesIncompletasException : TorneoReglaException
+public sealed class TorneoInscripcionesIncompletasException : TorneoReglaException, IConflictoNegocioException
 {
     public TorneoInscripcionesIncompletasException(int actual, int capacidad)
         : base($"El torneo tiene {actual} inscripciones, pero necesita exactamente {capacidad} para iniciar.")
@@ -48,7 +48,7 @@ public sealed class TorneoInscripcionesIncompletasException : TorneoReglaExcepti
     }
 }
 
-public sealed class TorneoFinalNoCompletadaException : TorneoReglaException
+public sealed class TorneoFinalNoCompletadaException : TorneoReglaException, IConflictoNegocioException
 {
     public TorneoFinalNoCompletadaException(Guid id)
         : base($"No se puede finalizar el torneo '{id}' porque su final no está completada.")

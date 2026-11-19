@@ -62,7 +62,7 @@ public sealed class JugadorServicio : IJugadorServicio
         if (jugador.Activo && !solicitud.Activo &&
             await _equipoRepositorio.EstaJugadorEnEquipoActivoAsync(id))
         {
-            throw new DatosJugadorInvalidosException(
+            throw new JugadorEnEquipoActivoException(
                 "No se puede desactivar un jugador que pertenece a un equipo activo.");
         }
 
@@ -85,7 +85,7 @@ public sealed class JugadorServicio : IJugadorServicio
     {
         if (await _equipoRepositorio.EstaJugadorEnEquipoActivoAsync(id))
         {
-            throw new DatosJugadorInvalidosException(
+            throw new JugadorEnEquipoActivoException(
                 "No se puede eliminar un jugador que pertenece a un equipo activo.");
         }
 

@@ -34,15 +34,8 @@ public sealed class EquiposController : ControllerBase
     [HttpPost]
     public async Task<ActionResult<EquipoRespuestaDto>> Crear(CrearEquipoDto solicitud)
     {
-        try
-        {
-            var equipo = await _servicio.CrearAsync(solicitud);
-            return CreatedAtAction(nameof(ObtenerPorId), new { id = equipo.Id }, equipo);
-        }
-        catch (EquipoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var equipo = await _servicio.CrearAsync(solicitud);
+        return CreatedAtAction(nameof(ObtenerPorId), new { id = equipo.Id }, equipo);
     }
 
     [HttpPut("{id:guid}")]
@@ -50,38 +43,24 @@ public sealed class EquiposController : ControllerBase
         Guid id,
         ActualizarEquipoDto solicitud)
     {
-        try
-        {
-            var equipo = await _servicio.ActualizarAsync(id, solicitud);
-            return equipo is null
-                ? NotFound(new { mensaje = "El equipo no existe." })
-                : Ok(equipo);
-        }
-        catch (EquipoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var equipo = await _servicio.ActualizarAsync(id, solicitud);
+        return equipo is null
+            ? NotFound(new { mensaje = "El equipo no existe." })
+            : Ok(equipo);
     }
 
     [HttpDelete("{id:guid}")]
     public async Task<IActionResult> Eliminar(Guid id)
     {
-        try
+        var resultado = await _servicio.EliminarAsync(id);
+        if (resultado is null)
         {
-            var resultado = await _servicio.EliminarAsync(id);
-            if (resultado is null)
-            {
-                return NotFound(new { mensaje = "El equipo no existe." });
-            }
+            return NotFound(new { mensaje = "El equipo no existe." });
+        }
 
-            return resultado.EliminadoFisicamente
-                ? NoContent()
-                : Ok(resultado.Equipo);
-        }
-        catch (EquipoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return resultado.EliminadoFisicamente
+            ? NoContent()
+            : Ok(resultado.Equipo);
     }
 
     [HttpGet("{equipoId:guid}/jugadores")]
@@ -98,44 +77,14 @@ public sealed class EquiposController : ControllerBase
         Guid equipoId,
         Guid jugadorId)
     {
-        try
-        {
-            return Ok(await _servicio.AgregarJugadorAsync(equipoId, jugadorId));
-        }
-        catch (EquipoNoEncontradoException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (JugadorNoEncontradoException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (EquipoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return Ok(await _servicio.AgregarJugadorAsync(equipoId, jugadorId));
     }
 
     [HttpDelete("{equipoId:guid}/jugadores/{jugadorId:guid}")]
     public async Task<IActionResult> RetirarJugador(Guid equipoId, Guid jugadorId)
     {
-        try
-        {
-            return await _servicio.RetirarJugadorAsync(equipoId, jugadorId)
-                ? NoContent()
-                : NotFound(new { mensaje = "La relación equipo-jugador no existe." });
-        }
-        catch (EquipoNoEncontradoException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (RelacionEquipoJugadorNoEncontradaException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (EquipoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return await _servicio.RetirarJugadorAsync(equipoId, jugadorId)
+            ? NoContent()
+            : NotFound(new { mensaje = "La relación equipo-jugador no existe." });
     }
 }

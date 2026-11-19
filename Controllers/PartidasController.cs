@@ -37,19 +37,8 @@ public sealed class PartidasController : ControllerBase
     [HttpPost("torneos/{torneoId:guid}/partidas/generar-grupos")]
     public async Task<ActionResult<IReadOnlyCollection<PartidaRespuestaDto>>> GenerarPartidasDeGrupos(Guid torneoId)
     {
-        try
-        {
-            var partidas = await _servicio.GenerarPartidasDeGruposAsync(torneoId);
-            return CreatedAtAction(nameof(ObtenerPorTorneo), new { torneoId }, partidas);
-        }
-        catch (TorneoNoEncontradoParaPartidaException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (PartidaReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var partidas = await _servicio.GenerarPartidasDeGruposAsync(torneoId);
+        return CreatedAtAction(nameof(ObtenerPorTorneo), new { torneoId }, partidas);
     }
 
     [HttpPut("partidas/{id:guid}/resultado")]
@@ -57,52 +46,19 @@ public sealed class PartidasController : ControllerBase
         Guid id,
         RegistrarResultadoPartidaDto solicitud)
     {
-        try
-        {
-            return Ok(await _servicio.RegistrarResultadoAsync(id, solicitud));
-        }
-        catch (PartidaNoEncontradaException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (TorneoNoEncontradoParaPartidaException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (PartidaReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        return Ok(await _servicio.RegistrarResultadoAsync(id, solicitud));
     }
 
     [HttpGet("grupos/{grupoId:guid}/clasificacion")]
     public async Task<ActionResult<ClasificacionGrupoRespuestaDto>> ObtenerClasificacion(Guid grupoId)
     {
-        try
-        {
-            return Ok(await _servicio.ObtenerClasificacionGrupoAsync(grupoId));
-        }
-        catch (PartidaReglaException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
+        return Ok(await _servicio.ObtenerClasificacionGrupoAsync(grupoId));
     }
 
     [HttpPost("torneos/{torneoId:guid}/eliminatorias/generar")]
     public async Task<ActionResult<IReadOnlyCollection<PartidaRespuestaDto>>> GenerarSiguienteFase(Guid torneoId)
     {
-        try
-        {
-            var partidas = await _servicio.GenerarSiguienteFaseAsync(torneoId);
-            return CreatedAtAction(nameof(ObtenerPorTorneo), new { torneoId }, partidas);
-        }
-        catch (TorneoNoEncontradoParaPartidaException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (PartidaReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var partidas = await _servicio.GenerarSiguienteFaseAsync(torneoId);
+        return CreatedAtAction(nameof(ObtenerPorTorneo), new { torneoId }, partidas);
     }
 }

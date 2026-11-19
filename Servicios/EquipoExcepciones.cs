@@ -8,7 +8,7 @@ public abstract class EquipoReglaException : Exception
     }
 }
 
-public sealed class NombreEquipoDuplicadoException : EquipoReglaException
+public sealed class NombreEquipoDuplicadoException : EquipoReglaException, IConflictoNegocioException
 {
     public NombreEquipoDuplicadoException(string nombre)
         : base($"El nombre de equipo '{nombre}' ya está registrado.")
@@ -40,7 +40,7 @@ public sealed class JugadorNoEncontradoException : EquipoReglaException
     }
 }
 
-public sealed class JugadorInactivoException : EquipoReglaException
+public sealed class JugadorInactivoException : EquipoReglaException, IConflictoNegocioException
 {
     public JugadorInactivoException(Guid id)
         : base($"El jugador '{id}' está inactivo.")
@@ -48,7 +48,7 @@ public sealed class JugadorInactivoException : EquipoReglaException
     }
 }
 
-public sealed class EquipoInactivoException : EquipoReglaException
+public sealed class EquipoInactivoException : EquipoReglaException, IConflictoNegocioException
 {
     public EquipoInactivoException(Guid id)
         : base($"El equipo '{id}' está inactivo.")
@@ -56,7 +56,7 @@ public sealed class EquipoInactivoException : EquipoReglaException
     }
 }
 
-public sealed class EquipoCompletoException : EquipoReglaException
+public sealed class EquipoCompletoException : EquipoReglaException, IConflictoNegocioException
 {
     public EquipoCompletoException(Guid id)
         : base($"El equipo '{id}' ya tiene cinco jugadores activos.")
@@ -64,7 +64,7 @@ public sealed class EquipoCompletoException : EquipoReglaException
     }
 }
 
-public sealed class JugadorYaPerteneceAlEquipoException : EquipoReglaException
+public sealed class JugadorYaPerteneceAlEquipoException : EquipoReglaException, IConflictoNegocioException
 {
     public JugadorYaPerteneceAlEquipoException(Guid jugadorId, Guid equipoId)
         : base($"El jugador '{jugadorId}' ya pertenece al equipo '{equipoId}'.")
@@ -72,7 +72,7 @@ public sealed class JugadorYaPerteneceAlEquipoException : EquipoReglaException
     }
 }
 
-public sealed class JugadorYaAsignadoException : EquipoReglaException
+public sealed class JugadorYaAsignadoException : EquipoReglaException, IConflictoNegocioException
 {
     public JugadorYaAsignadoException(Guid jugadorId)
         : base($"El jugador '{jugadorId}' ya pertenece a otro equipo activo.")

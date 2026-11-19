@@ -19,22 +19,11 @@ public sealed class GruposController : ControllerBase
     [HttpPost("torneos/{torneoId:guid}/grupos/generar")]
     public async Task<ActionResult<IReadOnlyCollection<GrupoRespuestaDto>>> Generar(Guid torneoId)
     {
-        try
-        {
-            var grupos = await _servicio.GenerarAsync(torneoId);
-            return CreatedAtAction(
-                nameof(ObtenerPorTorneo),
-                new { torneoId },
-                grupos);
-        }
-        catch (TorneoNoEncontradoParaGruposException exception)
-        {
-            return NotFound(new { mensaje = exception.Message });
-        }
-        catch (GrupoReglaException exception)
-        {
-            return BadRequest(new { mensaje = exception.Message });
-        }
+        var grupos = await _servicio.GenerarAsync(torneoId);
+        return CreatedAtAction(
+            nameof(ObtenerPorTorneo),
+            new { torneoId },
+            grupos);
     }
 
     [HttpGet("torneos/{torneoId:guid}/grupos")]

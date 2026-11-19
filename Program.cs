@@ -2,6 +2,7 @@ using SistemaGestionLigaEsports.Repositorios;
 using SistemaGestionLigaEsports.Repositorios.Interfaces;
 using SistemaGestionLigaEsports.Servicios;
 using SistemaGestionLigaEsports.Servicios.Interfaces;
+using SistemaGestionLigaEsports.Middlewares;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -26,6 +27,8 @@ builder.Services.AddOpenApi();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+app.UseMiddleware<GlobalExceptionMiddleware>();
+
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
