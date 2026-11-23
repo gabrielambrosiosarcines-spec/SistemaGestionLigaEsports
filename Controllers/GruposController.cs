@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Authorization;
 using SistemaGestionLigaEsports.Dtos;
 using SistemaGestionLigaEsports.Servicios;
 using SistemaGestionLigaEsports.Servicios.Interfaces;
@@ -6,6 +7,7 @@ using SistemaGestionLigaEsports.Servicios.Interfaces;
 namespace SistemaGestionLigaEsports.Controllers;
 
 [ApiController]
+[Authorize]
 [Route("api")]
 public sealed class GruposController : ControllerBase
 {

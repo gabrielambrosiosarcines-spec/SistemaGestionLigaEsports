@@ -30,6 +30,22 @@ public sealed class JugadorRepositorioMemoria : IJugadorRepositorio
         }
     }
 
+    public Task<IReadOnlyCollection<Jugador>> ObtenerPorIdsAsync(
+        IEnumerable<Guid> ids)
+    {
+        lock (_lock)
+        {
+            var idsBuscados = ids.ToHashSet();
+            IReadOnlyCollection<Jugador> jugadores = _jugadores
+                .Where(jugador => idsBuscados.Contains(jugador.Id))
+                .Select(Copiar)
+                .ToList()
+                .AsReadOnly();
+
+            return Task.FromResult(jugadores);
+        }
+    }
+
     public Task<Jugador?> BuscarPorNicknameAsync(string nickname)
     {
         lock (_lock)

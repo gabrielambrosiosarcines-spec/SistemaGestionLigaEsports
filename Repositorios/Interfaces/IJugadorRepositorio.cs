@@ -8,6 +8,9 @@ public interface IJugadorRepositorio
 
     Task<Jugador?> ObtenerPorIdAsync(Guid id);
 
+    Task<IReadOnlyCollection<Jugador>> ObtenerPorIdsAsync(
+        IEnumerable<Guid> ids);
+
     Task<Jugador?> BuscarPorNicknameAsync(string nickname);
 
     Task<bool> ExisteNicknameAsync(string nickname, Guid? idExcluir = null);

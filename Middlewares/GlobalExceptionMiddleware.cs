@@ -64,6 +64,9 @@ public sealed class GlobalExceptionMiddleware
     {
         return exception switch
         {
+            CredencialesInvalidasException
+                => StatusCodes.Status401Unauthorized,
+
             IConflictoNegocioException
                 => StatusCodes.Status409Conflict,
 
@@ -78,6 +81,7 @@ public sealed class GlobalExceptionMiddleware
                 => StatusCodes.Status404NotFound,
 
             NicknameDuplicadoException or
+            DatosRegistroUsuarioInvalidosException or
             DatosJugadorInvalidosException or
             EquipoReglaException or
             TorneoReglaException or

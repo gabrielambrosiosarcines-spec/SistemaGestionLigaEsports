@@ -24,14 +24,17 @@ public sealed class EquipoServicio : IEquipoServicio
     public async Task<IReadOnlyCollection<EquipoRespuestaDto>> ObtenerTodosAsync()
     {
         var equipos = await _equipoRepositorio.ObtenerTodosAsync();
-        var respuestas = new List<EquipoRespuestaDto>();
+        var jugadorIds = equipos
+            .SelectMany(equipo => equipo.JugadorIds)
+            .Distinct()
+            .ToList();
+        var jugadores = await _jugadorRepositorio.ObtenerPorIdsAsync(jugadorIds);
+        var jugadoresPorId = jugadores.ToDictionary(jugador => jugador.Id);
 
-        foreach (var equipo in equipos)
-        {
-            respuestas.Add(await MapearAsync(equipo));
-        }
-
-        return respuestas.AsReadOnly();
+        return equipos
+            .Select(equipo => Mapear(equipo, jugadoresPorId))
+            .ToList()
+            .AsReadOnly();
     }
 
     public async Task<EquipoRespuestaDto?> ObtenerPorIdAsync(Guid id)
@@ -206,35 +209,39 @@ public sealed class EquipoServicio : IEquipoServicio
 
     private async Task<EquipoRespuestaDto> MapearAsync(Equipo equipo)
     {
+        var jugadores = await _jugadorRepositorio.ObtenerPorIdsAsync(
+            equipo.JugadorIds);
+        return Mapear(equipo, jugadores.ToDictionary(jugador => jugador.Id));
+    }
+
+    private static EquipoRespuestaDto Mapear(
+        Equipo equipo,
+        IReadOnlyDictionary<Guid, Jugador> jugadoresPorId)
+    {
         return new EquipoRespuestaDto
         {
             Id = equipo.Id,
             Nombre = equipo.Nombre,
             Activo = equipo.Activo,
-            Jugadores = await ObtenerJugadoresAsync(equipo)
-        };
-    }
-
-    private async Task<IReadOnlyCollection<JugadorRespuestaDto>> ObtenerJugadoresAsync(Equipo equipo)
-    {
-        var jugadores = new List<JugadorRespuestaDto>();
-
-        foreach (var jugadorId in equipo.JugadorIds)
-        {
-            var jugador = await _jugadorRepositorio.ObtenerPorIdAsync(jugadorId);
-            if (jugador is not null)
-            {
-                jugadores.Add(new JugadorRespuestaDto
+            Jugadores = equipo.JugadorIds
+                .Where(jugadorId => jugadoresPorId.ContainsKey(jugadorId))
+                .Select(jugadorId => jugadoresPorId[jugadorId])
+                .Select(jugador => new JugadorRespuestaDto
                 {
                     Id = jugador.Id,
                     Nickname = jugador.Nickname,
                     Nombre = jugador.Nombre,
                     Activo = jugador.Activo
-                });
-            }
-        }
+                })
+                .ToList()
+                .AsReadOnly()
+        };
+    }
 
-        return jugadores.AsReadOnly();
+    private async Task<IReadOnlyCollection<JugadorRespuestaDto>> ObtenerJugadoresAsync(Equipo equipo)
+    {
+        var respuesta = await MapearAsync(equipo);
+        return respuesta.Jugadores;
     }
 
     private static string ValidarNombre(string? nombre)
